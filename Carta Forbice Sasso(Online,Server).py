@@ -1,40 +1,47 @@
-
-from base64 import decode
-from msilib.schema import Class
-from multiprocessing.connection import Client
 import socket
 import threading
 from time import sleep
 import json
 
-Server = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-Server.bind(("192.168.1.101",80))
-Server.listen()
+# Objects:(
+#   1:Checking Names
+# 
+# )
 
-Clients = []
-Sessions = []
+
+Server = socket.socket(socket.AF_INET,socket.SOCK_STREAM) # Creating The Obj
+Server.bind(("192.168.1.101",8888)) # Binding To The Main Host
+Server.listen() # Listen For Connection
+
+Clients = [] # Containing Every Player Till He Gets On A Game
+Sessions = [] # Objects Which Will Contain The Players Of A Game
+
+
 class User():
     def __init__(self,Nick,Connection,Id):
-        self.Nick = Nick
-        self.Connection = Connection
-        self.Id = Id
+        self.Nick = Nick # His Nickname
+        self.Connection = Connection # Socket Which Containts The Connection Within A User/Player
+        self.Id = Id # The Pass For Enter Into The Game With SomeoneElse Which Put It Exactly Like Him
 
 
 class Session():
     def __init__(self,User1,User2,IsOn):
-        self.User1 = User1
-        self.User2 = User2
-        self.IsOn = IsOn
+        self.User1 = User1 # Player 1
+        self.User2 = User2 # Player 2
+        self.IsOn = IsOn # Used To Check If The Session Is Already In Use
+
+    
 def GetClient():
-        conn,addr = Server.accept()
-        nickname = conn.recv(1024).decode('utf-8')
-        Id = conn.recv(1024).decode('utf-8')    
-        Client = User(nickname,conn,Id)
-        Clients.append(Client)     
+        conn,addr = Server.accept() # Accepting The Connection With A User
+        nickname = conn.recv(1024).decode('utf-8') # His Nickname
+        Id = conn.recv(1024).decode('utf-8')  # The Password To Enter Into A Game
+        Client = User(nickname,conn,Id) # Assembling The User
+        Clients.append(Client) # Saving Him Up Cause Of The Scope Of The Function
 
                 
-        
+
 def Game():
+    # SELF EXPLAINING
     for game in Sessions:
         if not game.IsOn:
                 game.IsOn = True
@@ -86,21 +93,19 @@ def Game():
                         sleep(.1)
                         game.User1.Connection.send(Json.encode('utf-8'))
                         game.User2.Connection.send(Json.encode('utf-8'))                                
-                game.User1.Connection.send(f"The Game Is Closed".encode('utf-8'))
-                game.User2.Connection.send(f"The Game Is Closed".encode('utf-8'))
                 game.User2.Connection.close()
                 game.User2.Connection.close()
                 del game
 while True:
     try:
         threading.Thread(target=GetClient).start()
-        for x in range(0,len(Clients) - 1):
+        for x in range(0,len(Clients) - 1): # Checking Id's With A Semi-Sorting Method
             for i in range(0,len(Clients)):
                 if x == len(Clients):
                     i = 0
                 if i == x:
                     i = x + 1
-                if Clients[x].Id == Clients[i].Id:
+                if Clients[x].Id == Clients[i].Id: #If Two Id's Match They'll Get Transported To The game
                     Clients[x].Connection.send("Game Starting".encode('utf-8'))
                     Clients[i].Connection.send("Game Starting".encode('utf-8'))               
                     game = Session(Clients[x],Clients[i],False)
@@ -110,14 +115,11 @@ while True:
                     threading.Thread(target=Game).start()
                     break
             break
+        #Restarting The Check
     except ConnectionAbortedError:
-        N = True
+        Left = True
         
-#  Notes:
-#       85% Finished(server)
-#           5% Finished(Client)
 
-
-
-
+# this game is still a draft,One Of my first projects in python :)
+# Took Me 5 or 6 days.
 
